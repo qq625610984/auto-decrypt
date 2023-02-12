@@ -17,10 +17,14 @@ public class FileService {
      * 格式化文件夹路径
      *
      * @param dir 文件夹路径
-     * @return 结尾带/的路径
+     * @return 结尾不带/的路径
      */
     public String formatDirPath(String dir) {
-        return FileUtil.normalize(dir + "/");
+        dir = FileUtil.normalize(dir);
+        if (dir.length() > 1 && StrUtil.endWith(dir, "/")) {
+            dir = StrUtil.subBefore(dir, "/", true);
+        }
+        return dir;
     }
 
     /**

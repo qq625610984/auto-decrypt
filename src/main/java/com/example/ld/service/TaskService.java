@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author HeYiyu
@@ -28,7 +30,7 @@ public class TaskService {
     @Resource
     private FileAlterationMonitor fileAlterationMonitor;
 
-    private final CopyOnWriteArrayList<FileAlterationObserver> fileObserverList = new CopyOnWriteArrayList<>();
+    private final Map<String, FileAlterationObserver> fileObserverMap = new ConcurrentHashMap<>();
 
     public void addMonitorTask(MonitorTask monitorTask) {
         monitorTask.setMonitorPath(fileService.formatDirPath(monitorTask.getMonitorPath()));
@@ -37,14 +39,13 @@ public class TaskService {
             monitorTask.setTriggerTime(DateUtil.offsetDay(new Date(), customProperties.getMonitorStartDay() * -1).getTime());
         }
         File file = new File(monitorTask.getMonitorPath());
-        if (!FileUtil.exist(file)) {
-            log.info("创建文件夹：{}", FileUtil.mkdir(file).getAbsolutePath());
+        if (!fileObserverMap.containsKey(file.getAbsolutePath())) {
+            log.info("监控文件夹：{}", FileUtil.mkdir(file).getAbsolutePath());
+            FileAlterationObserver fileObserver = new FileAlterationObserver(file);
+            fileObserver.addListener(new FileListener(monitorTask));
+            fileObserverMap.put(file.getAbsolutePath(), fileObserver);
+            fileAlterationMonitor.addObserver(fileObserver);
         }
-        log.info("监控文件夹：{}", file.getAbsolutePath());
-        FileAlterationObserver fileObserver = new FileAlterationObserver(file);
-        fileObserver.addListener(new FileListener(monitorTask));
-        fileObserverList.add(fileObserver);
-        fileAlterationMonitor.addObserver(fileObserver);
     }
 
     public void initMonitorTask() {
@@ -58,7 +59,11 @@ public class TaskService {
     }
 
     public void clearMonitorTask() {
-        fileObserverList.forEach(fileObserver -> fileAlterationMonitor.removeObserver(fileObserver));
-        fileObserverList.clear();
+        fileObserverMap.values().forEach(fileObserver -> fileAlterationMonitor.removeObserver(fileObserver));
+        fileObserverMap.clear();
+    }
+
+    public Set<String> listMonitorTask() {
+        return fileObserverMap.keySet();
     }
 }
