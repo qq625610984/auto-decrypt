@@ -1,10 +1,10 @@
 server:
   port: 30001
 custom:
-  server-host: 192.168.0.73
-  server-port: 7788
+#  server-host: 192.168.0.73
+  #  server-port: 7788
+  retry-times: 5
   netty-port: 7788
-  localhost: localhost
   monitor-start-day: 1
   monitor-interval: 500
   monitor-path: "{Home}\\Desktop\\解密文件"

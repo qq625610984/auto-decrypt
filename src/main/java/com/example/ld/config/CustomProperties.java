@@ -21,8 +21,8 @@ import java.util.List;
 public class CustomProperties {
     private String serverHost;
     private int serverPort;
+    private int retryTimes;
     private int nettyPort;
-    private String localhost;
     private int monitorStartDay;
     private long monitorInterval;
     private List<String> monitorPath = new ArrayList<>();

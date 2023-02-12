@@ -4,6 +4,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.example.ld.common.CommonConstant;
 import com.example.ld.pojo.MonitorTask;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +25,11 @@ public class FileListener implements FileAlterationListener {
     private final TaskService taskService = SpringUtil.getBean(TaskService.class);
     private final FileService fileService = SpringUtil.getBean(FileService.class);
     private final MonitorTask monitorTask;
+    private final boolean local;
 
     public FileListener(MonitorTask monitorTask) {
         this.monitorTask = monitorTask;
+        local = StrUtil.isEmpty(monitorTask.getToHost());
     }
 
     @Override
@@ -59,13 +62,17 @@ public class FileListener implements FileAlterationListener {
     private void decryptFile(File file, String message) {
         BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
-        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime() && !StrUtil.equals(FileUtil.getSuffix(file), "tmp") && !file.isHidden()) {
+        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime() && !StrUtil.endWith(file.getName(), CommonConstant.tempSuffix) && !file.isHidden()) {
             try {
                 log.debug("文件镜像-{}，{}", message, monitorTask);
-
+                if (local) {
+                    File tempFile = fileService.getTempFile(file);
+                    FileUtil.copy(file, tempFile, true);
+                    FileUtil.rename(tempFile, file.getName(), true);
+                }
             } catch (Exception e) {
                 log.error("文件镜像失败-{}，失败信息：{}，{}", message, e.getMessage(), monitorTask);
-                log.error(ExceptionUtil.stacktraceToString(e));
+                log.debug(ExceptionUtil.stacktraceToString(e));
             }
         }
     }
