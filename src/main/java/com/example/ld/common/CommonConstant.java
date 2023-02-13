@@ -16,4 +16,6 @@ public class CommonConstant {
     public static final String TEMP_SUFFIX = ".tmp";
     // 远程解密文件的临时保存位置
     public static final String SERVER_DIR = "Encrypt";
+    // Netty传输确认信号
+    public static final String ACK = "ack";
 }

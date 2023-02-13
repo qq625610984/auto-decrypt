@@ -23,5 +23,4 @@ public class CustomConfig {
     private int monitorStartDay;
     private long monitorInterval;
     private List<String> monitorPath = new ArrayList<>();
-    private boolean localDecrypt;
 }

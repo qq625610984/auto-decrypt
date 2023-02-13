@@ -1,8 +1,11 @@
 package com.example.ld.service;
 
+import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.example.ld.common.CommonConstant;
+import com.example.ld.config.CustomConfig;
+import com.example.ld.pojo.DecryptTask;
 import com.example.ld.pojo.MonitorTask;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +24,13 @@ import java.nio.file.attribute.FileTime;
 @Slf4j
 public class FileListener implements FileAlterationListener {
     private final TaskService taskService = SpringUtil.getBean(TaskService.class);
+    private final CustomConfig customConfig = SpringUtil.getBean(CustomConfig.class);
     private final MonitorTask monitorTask;
+    private final String toPath;
 
     public FileListener(MonitorTask monitorTask) {
         this.monitorTask = monitorTask;
+        toPath = CommonConstant.SERVER_DIR + "/" + NetUtil.getLocalhostStr();
     }
 
     @Override
@@ -55,10 +61,17 @@ public class FileListener implements FileAlterationListener {
 
     @SneakyThrows
     private void decryptFile(File file) {
-        BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
-        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX) && !file.isHidden()) {
-            taskService.decryptFile(file);
+        if (!file.isHidden() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX)) {
+            BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
+            if (lastAccessTime.toMillis() > monitorTask.getTriggerTime()) {
+                DecryptTask decryptTask = new DecryptTask();
+                decryptTask.setServerHost(customConfig.getServerHost());
+                decryptTask.setServerPort(customConfig.getServerPort());
+                decryptTask.setFromPath(file.getAbsolutePath());
+                decryptTask.setToPath(toPath);
+                taskService.addDecryptTask(decryptTask);
+            }
         }
     }
 }

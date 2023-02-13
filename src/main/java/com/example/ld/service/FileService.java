@@ -36,4 +36,15 @@ public class FileService {
     public File getTempFile(File file) {
         return new File(file.getAbsolutePath() + CommonConstant.TEMP_SUFFIX);
     }
+
+    /**
+     * 将多个值拼接为路径，以'/'分隔
+     *
+     * @param objects 需要拼接的个元素
+     * @return 拼接后的路径
+     */
+    public String splicePath(Object... objects) {
+        String filePath = StrUtil.join("/", objects);
+        return FileUtil.normalize(filePath);
+    }
 }

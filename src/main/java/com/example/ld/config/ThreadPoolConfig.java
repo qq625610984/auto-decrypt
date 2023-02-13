@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * @author HeYiyu
@@ -16,10 +15,5 @@ public class ThreadPoolConfig {
     @Bean
     public ExecutorService threadPool() {
         return Executors.newFixedThreadPool(16);
-    }
-
-    @Bean
-    public ScheduledThreadPoolExecutor scheduledThreadPool() {
-        return new ScheduledThreadPoolExecutor(16);
     }
 }

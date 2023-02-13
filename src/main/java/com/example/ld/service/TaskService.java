@@ -3,8 +3,14 @@ package com.example.ld.service;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
+import com.example.ld.common.CommonConstant;
 import com.example.ld.config.CustomConfig;
+import com.example.ld.netty.NettyClient;
+import com.example.ld.pojo.DecryptTask;
 import com.example.ld.pojo.MonitorTask;
+import com.example.ld.pojo.TaskInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
@@ -13,6 +19,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,23 +40,39 @@ public class TaskService {
     private ExecutorService threadPool;
     @Resource
     private FileAlterationMonitor fileAlterationMonitor;
+    @Resource
+    private NettyClient nettyClient;
 
     private final Map<String, FileAlterationObserver> fileObserverMap = new ConcurrentHashMap<>();
 
-    public void decryptFile(File file) {
-        threadPool.execute(() -> {
-            log.debug("文件解密-{}", file.getAbsolutePath());
-            try {
-                if (customConfig.isLocalDecrypt()) {
-                    File tempFile = fileService.getTempFile(file);
-                    FileUtil.copy(file, tempFile, true);
-                    FileUtil.rename(tempFile, file.getName(), true);
+    public void addDecryptTask(DecryptTask decryptTask) {
+        List<File> fileList = FileUtil.loopFiles(decryptTask.getFromPath(), file -> !file.isHidden() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX));
+        for (File file : fileList) {
+            threadPool.execute(() -> {
+                try {
+                    log.debug("文件解密-{}", file.getAbsolutePath());
+                    if (StrUtil.isEmpty(decryptTask.getServerHost())) {
+                        // 本地解密
+                        File tempFile = fileService.getTempFile(file);
+                        FileUtil.copy(file, tempFile, true);
+                        FileUtil.rename(tempFile, file.getName(), true);
+                    } else {
+                        // 远程解密
+                        TaskInfo taskInfo = new TaskInfo();
+                        taskInfo.setTaskId(IdUtil.objectId());
+                        taskInfo.setServerHost(decryptTask.getServerHost());
+                        taskInfo.setServerPort(decryptTask.getServerPort());
+                        taskInfo.setFromPath(FileUtil.normalize(file.getAbsolutePath()));
+                        taskInfo.setToPath(fileService.splicePath(decryptTask.getToPath(), taskInfo.getTaskId()));
+                        taskInfo.setTotalLength(file.length());
+                        nettyClient.send(taskInfo);
+                    }
+                } catch (Exception e) {
+                    log.error("文件解密失败-{}，失败信息：{}", file.getAbsolutePath(), e.getMessage());
+                    log.error(ExceptionUtil.stacktraceToString(e));
                 }
-            } catch (Exception e) {
-                log.error("文件解密失败-{}，失败信息：{}", file.getAbsolutePath(), e.getMessage());
-                log.debug(ExceptionUtil.stacktraceToString(e));
-            }
-        });
+            });
+        }
     }
 
     public void addMonitorTask(MonitorTask monitorTask) {
