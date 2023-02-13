@@ -2,7 +2,7 @@ package com.example.ld.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  * @date 2023/2/11
  */
 @Data
-@Configuration
+@Component
 @ConfigurationProperties(prefix = "custom")
 public class CustomConfig {
     private String serverHost;

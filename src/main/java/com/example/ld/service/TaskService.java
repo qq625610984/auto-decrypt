@@ -63,7 +63,7 @@ public class TaskService {
                         taskInfo.setServerHost(decryptTask.getServerHost());
                         taskInfo.setServerPort(decryptTask.getServerPort());
                         taskInfo.setFromPath(FileUtil.normalize(file.getAbsolutePath()));
-                        taskInfo.setToPath(fileService.splicePath(decryptTask.getToPath(), taskInfo.getTaskId()));
+                        taskInfo.setToPath(fileService.splicePath(decryptTask.getToPath(), taskInfo.getTaskId() + CommonConstant.TEMP_SUFFIX));
                         taskInfo.setTotalLength(file.length());
                         nettyClient.send(taskInfo);
                     }
@@ -83,6 +83,8 @@ public class TaskService {
         File file = new File(monitorTask.getMonitorPath());
         if (!fileObserverMap.containsKey(file.getAbsolutePath())) {
             log.info("监控文件夹：{}", FileUtil.mkdir(file).getAbsolutePath());
+            // 清理临时文件
+            FileUtil.loopFiles(file.getAbsolutePath(), each -> StrUtil.endWith(each.getName(), CommonConstant.TEMP_SUFFIX)).forEach(FileUtil::del);
             FileAlterationObserver fileObserver = new FileAlterationObserver(file);
             fileObserver.addListener(new FileListener(monitorTask));
             fileObserverMap.put(file.getAbsolutePath(), fileObserver);
