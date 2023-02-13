@@ -50,7 +50,7 @@ public class TaskService {
         for (File file : fileList) {
             threadPool.execute(() -> {
                 try {
-                    log.debug("文件解密-{}", file.getAbsolutePath());
+                    log.debug("开始解密-{}", file.getAbsolutePath());
                     if (StrUtil.isEmpty(decryptTask.getServerHost())) {
                         // 本地解密
                         File tempFile = fileService.getTempFile(file);
@@ -68,7 +68,7 @@ public class TaskService {
                         nettyClient.send(taskInfo);
                     }
                 } catch (Exception e) {
-                    log.error("文件解密失败-{}，失败信息：{}", file.getAbsolutePath(), e.getMessage());
+                    log.error("解密失败-{}，失败信息：{}", file.getAbsolutePath(), e.getMessage());
                     log.error(ExceptionUtil.stacktraceToString(e));
                 }
             });
