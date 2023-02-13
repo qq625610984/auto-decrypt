@@ -1,9 +1,6 @@
 package com.example.ld.common;
 
-import cn.hutool.core.collection.CollUtil;
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * @author HeYiyu
@@ -15,8 +12,8 @@ public class CommonConstant {
     public static final int DATA_SLICE = 65536;
     // 每轮文件传输发送的数据片数量
     public static final int TRANSMIT_TIMES = 100;
-    // 重试延迟时间
-    public static final List<Integer> DELAY = CollUtil.newArrayList(10, 20, 30, 60);
     // 临时文件后缀名
-    public static final String tempSuffix = ".tmp";
+    public static final String TEMP_SUFFIX = ".tmp";
+    // 远程解密文件的临时保存位置
+    public static final String SERVER_DIR = "Encrypt";
 }

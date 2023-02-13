@@ -13,7 +13,4 @@ public class MonitorTask {
     @NotBlank(message = "monitorPath不能为空")
     private String monitorPath;
     private long triggerTime;
-    private String toHost;
-    private int toPort;
-    private String toPath;
 }

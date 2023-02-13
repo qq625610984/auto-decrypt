@@ -12,11 +12,11 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
 
 /**
  * @author HeYiyu
- * @date 2023/1/4
+ * @date 2023/2/11
  */
 @Configuration
 @EnableSwagger2WebMvc
-public class Knife4jConfiguration {
+public class Knife4jConfig {
     @Bean
     public Docket docket() {
         Docket docket = new Docket(DocumentationType.SWAGGER_2)

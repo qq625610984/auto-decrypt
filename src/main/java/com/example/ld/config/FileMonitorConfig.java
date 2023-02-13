@@ -8,15 +8,15 @@ import javax.annotation.Resource;
 
 /**
  * @author HeYiyu
- * @date 2023/2/10
+ * @date 2023/2/11
  */
 @Configuration
 public class FileMonitorConfig {
     @Resource
-    private CustomProperties customProperties;
+    private CustomConfig customConfig;
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     public FileAlterationMonitor fileAlterationMonitor() {
-        return new FileAlterationMonitor(customProperties.getMonitorInterval());
+        return new FileAlterationMonitor(customConfig.getMonitorInterval());
     }
 }

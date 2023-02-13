@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @author HeYiyu
- * @date 2023/1/4
+ * @date 2023/2/11
  */
 @Data
 public class CommonResult<T> implements Serializable {

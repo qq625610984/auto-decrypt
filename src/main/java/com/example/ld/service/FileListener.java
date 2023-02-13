@@ -1,7 +1,5 @@
 package com.example.ld.service;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.example.ld.common.CommonConstant;
@@ -18,18 +16,15 @@ import java.nio.file.attribute.FileTime;
 
 /**
  * @author HeYiyu
- * @date 2020/8/19
+ * @date 2023/2/11
  */
 @Slf4j
 public class FileListener implements FileAlterationListener {
     private final TaskService taskService = SpringUtil.getBean(TaskService.class);
-    private final FileService fileService = SpringUtil.getBean(FileService.class);
     private final MonitorTask monitorTask;
-    private final boolean local;
 
     public FileListener(MonitorTask monitorTask) {
         this.monitorTask = monitorTask;
-        local = StrUtil.isEmpty(monitorTask.getToHost());
     }
 
     @Override
@@ -40,7 +35,7 @@ public class FileListener implements FileAlterationListener {
 
     @Override
     public void onFileCreate(File file) {
-        decryptFile(file, "创建文件：" + file.getAbsolutePath());
+        decryptFile(file);
     }
 
     @Override
@@ -59,21 +54,11 @@ public class FileListener implements FileAlterationListener {
     public void onStop(FileAlterationObserver observer) {}
 
     @SneakyThrows
-    private void decryptFile(File file, String message) {
+    private void decryptFile(File file) {
         BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
-        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime() && !StrUtil.endWith(file.getName(), CommonConstant.tempSuffix) && !file.isHidden()) {
-            try {
-                log.debug("文件镜像-{}，{}", message, monitorTask);
-                if (local) {
-                    File tempFile = fileService.getTempFile(file);
-                    FileUtil.copy(file, tempFile, true);
-                    FileUtil.rename(tempFile, file.getName(), true);
-                }
-            } catch (Exception e) {
-                log.error("文件镜像失败-{}，失败信息：{}，{}", message, e.getMessage(), monitorTask);
-                log.debug(ExceptionUtil.stacktraceToString(e));
-            }
+        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX) && !file.isHidden()) {
+            taskService.decryptFile(file);
         }
     }
 }

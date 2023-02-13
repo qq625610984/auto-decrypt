@@ -28,23 +28,12 @@ public class FileService {
     }
 
     /**
-     * 在源文件结尾添加后缀
+     * 在源文件结尾添加后缀来生成临时文件
      *
      * @param file 源文件
      * @return 同名临时文件
      */
     public File getTempFile(File file) {
-        return new File(file.getAbsolutePath() + CommonConstant.tempSuffix);
-    }
-
-    /**
-     * 获取文件相对路径
-     *
-     * @param absolutePath 文件绝对路径
-     * @param prefix       文件路径前缀
-     * @return 文件相对路径
-     */
-    public String getRelativePath(String absolutePath, String prefix) {
-        return StrUtil.subAfter(FileUtil.normalize(absolutePath), prefix, false);
+        return new File(file.getAbsolutePath() + CommonConstant.TEMP_SUFFIX);
     }
 }

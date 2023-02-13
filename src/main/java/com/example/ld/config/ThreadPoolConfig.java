@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * @author HeYiyu
- * @date 2023/2/8
+ * @date 2023/2/11
  */
 @Configuration
 public class ThreadPoolConfig {
@@ -19,7 +19,7 @@ public class ThreadPoolConfig {
     }
 
     @Bean
-    public ScheduledThreadPoolExecutor scheduledThreadPoolExecutor() {
+    public ScheduledThreadPoolExecutor scheduledThreadPool() {
         return new ScheduledThreadPoolExecutor(16);
     }
 }

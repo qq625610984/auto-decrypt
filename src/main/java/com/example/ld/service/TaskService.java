@@ -1,8 +1,9 @@
 package com.example.ld.service;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
-import com.example.ld.config.CustomProperties;
+import com.example.ld.config.CustomConfig;
 import com.example.ld.pojo.MonitorTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
@@ -15,6 +16,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author HeYiyu
@@ -24,19 +26,36 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class TaskService {
     @Resource
-    private CustomProperties customProperties;
+    private CustomConfig customConfig;
     @Resource
     private FileService fileService;
+    @Resource
+    private ExecutorService threadPool;
     @Resource
     private FileAlterationMonitor fileAlterationMonitor;
 
     private final Map<String, FileAlterationObserver> fileObserverMap = new ConcurrentHashMap<>();
 
+    public void decryptFile(File file) {
+        threadPool.execute(() -> {
+            log.debug("文件解密-{}", file.getAbsolutePath());
+            try {
+                if (customConfig.isLocalDecrypt()) {
+                    File tempFile = fileService.getTempFile(file);
+                    FileUtil.copy(file, tempFile, true);
+                    FileUtil.rename(tempFile, file.getName(), true);
+                }
+            } catch (Exception e) {
+                log.error("文件解密失败-{}，失败信息：{}", file.getAbsolutePath(), e.getMessage());
+                log.debug(ExceptionUtil.stacktraceToString(e));
+            }
+        });
+    }
+
     public void addMonitorTask(MonitorTask monitorTask) {
         monitorTask.setMonitorPath(fileService.formatDirPath(monitorTask.getMonitorPath()));
-        monitorTask.setToPath(fileService.formatDirPath(monitorTask.getToPath()));
         if (monitorTask.getTriggerTime() == 0) {
-            monitorTask.setTriggerTime(DateUtil.offsetDay(new Date(), customProperties.getMonitorStartDay() * -1).getTime());
+            monitorTask.setTriggerTime(DateUtil.offsetDay(new Date(), customConfig.getMonitorStartDay() * -1).getTime());
         }
         File file = new File(monitorTask.getMonitorPath());
         if (!fileObserverMap.containsKey(file.getAbsolutePath())) {
@@ -49,11 +68,9 @@ public class TaskService {
     }
 
     public void initMonitorTask() {
-        customProperties.getMonitorPath().forEach(path -> {
+        customConfig.getMonitorPath().forEach(path -> {
             MonitorTask monitorTask = new MonitorTask();
             monitorTask.setMonitorPath(path);
-            monitorTask.setToHost(customProperties.getServerHost());
-            monitorTask.setToPort(customProperties.getServerPort());
             addMonitorTask(monitorTask);
         });
     }
