@@ -31,6 +31,7 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
         if (taskInfo == null) {
             // 首次接收到数据
             taskInfo = (TaskInfo) msg;
+            modifyPath(taskInfo);
             log.debug("接收到任务数据：{}", taskInfo);
             tempFile = FileUtil.touch(taskInfo.getToPath());
             randomAccessFile = new RandomAccessFile(tempFile, "rw");
@@ -100,5 +101,12 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
             return lastSlice;
         }
         return data;
+    }
+
+    private void modifyPath(TaskInfo taskInfo) {
+        String toPath = taskInfo.getToPath();
+        if (!FileUtil.isAbsolutePath(toPath)) {
+            taskInfo.setToPath(FileUtil.normalize("~/" + toPath));
+        }
     }
 }
