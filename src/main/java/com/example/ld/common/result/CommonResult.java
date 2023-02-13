@@ -15,7 +15,7 @@ public class CommonResult<T> implements Serializable {
     // 简略信息
     private final String msg;
     // 返回数据
-    private final Object data;
+    private final T data;
 
     /**
      * 构造方法

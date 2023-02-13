@@ -1,5 +1,6 @@
 package com.example.ld.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
@@ -23,5 +24,10 @@ public class JacksonUtil {
     @SneakyThrows
     public static <T> T toObject(byte[] bytes, Class<T> clazz) {
         return objectMapper.readValue(bytes, clazz);
+    }
+
+    @SneakyThrows
+    public static <T> T toObject(byte[] bytes, TypeReference<T> valueTypeRef) {
+        return objectMapper.readValue(bytes, valueTypeRef);
     }
 }
