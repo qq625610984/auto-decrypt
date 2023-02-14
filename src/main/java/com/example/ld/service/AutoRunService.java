@@ -50,33 +50,38 @@ public class AutoRunService implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         List<String> monitorPath = customConfig.getMonitorPath();
         monitorPath.replaceAll(path -> fileService.formatDirPath(path));
-        if (customConfig.isProbe() && StrUtil.isEmpty(customConfig.getServerHost())) {
-            List<String> ipList = Ipv4Util.list(NetUtil.getLocalhostStr() + "/24", false);
-            CopyOnWriteArrayList<String> onlineList = new CopyOnWriteArrayList<>();
-            CountDownLatch countDownLatch = new CountDownLatch(ipList.size());
-            ipList.forEach(ip -> threadPool.execute(() -> {
-                try {
-                    HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(100).execute();
-                    CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
-                    CustomConfig data = result.getData();
-                    if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(ip, NetUtil.getLocalhostStr())) {
-                        customConfig.setServerHost(ip);
-                        customConfig.setServerPort(data.getNettyPort());
-                        onlineList.add(ip);
+        if (customConfig.isProbe()) {
+            try {
+                nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                List<String> ipList = Ipv4Util.list(NetUtil.getLocalhostStr() + "/24", false);
+                CopyOnWriteArrayList<String> onlineList = new CopyOnWriteArrayList<>();
+                CountDownLatch countDownLatch = new CountDownLatch(ipList.size());
+                ipList.forEach(ip -> threadPool.execute(() -> {
+                    try {
+                        HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(100).execute();
+                        CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
+                        CustomConfig data = result.getData();
+                        if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(ip, NetUtil.getLocalhostStr())) {
+                            customConfig.setServerHost(ip);
+                            customConfig.setServerPort(data.getNettyPort());
+                            onlineList.add(ip);
+                        }
+                    } catch (Exception ignore) {
+                    } finally {
+                        countDownLatch.countDown();
                     }
-                } catch (Exception ignore) {
-                } finally {
-                    countDownLatch.countDown();
-                }
-            }));
-            countDownLatch.await();
-            log.info(onlineList.toString());
+                }));
+                countDownLatch.await();
+                log.info(onlineList.toString());
+            }
         }
         log.info(String.valueOf(customConfig));
         // 清空远程解密产生的临时文件
         FileUtil.del(fileService.splicePath("~", CommonConstant.SERVER_DIR));
         if (!StrUtil.isEmpty(customConfig.getServerHost())) {
-            nettyClient.connect(customConfig.getServerHost(), customConfig.getNettyPort());
+            nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
         }
         taskService.initMonitorTask();
     }

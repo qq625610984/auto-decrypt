@@ -1,7 +1,7 @@
 server:
   port: 30001
 custom:
-#  server-host: 192.168.0.73
+#  server-host: 192.168.159.130
 #  server-port: 7788
   netty-port: 7788
   monitor-start-day: 1
