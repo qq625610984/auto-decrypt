@@ -24,4 +24,5 @@ public class CustomConfig {
     private long monitorInterval;
     private boolean probe;
     private List<String> monitorPath = new ArrayList<>();
+    private String localhost;
 }

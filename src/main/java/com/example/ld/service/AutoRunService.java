@@ -1,11 +1,12 @@
 package com.example.ld.service;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.net.Ipv4Util;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.system.SystemUtil;
 import com.example.ld.common.CommonConstant;
 import com.example.ld.common.result.CommonResult;
 import com.example.ld.config.CustomConfig;
@@ -20,6 +21,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -45,9 +50,9 @@ public class AutoRunService implements ApplicationRunner {
     @Value("${server.port}")
     private int port;
 
-    @SneakyThrows
     @Override
     public void run(ApplicationArguments args) {
+        customConfig.setLocalhost(NetUtil.getLocalhostStr());
         List<String> monitorPath = customConfig.getMonitorPath();
         monitorPath.replaceAll(path -> fileService.formatDirPath(path));
         if (customConfig.isProbe()) {
@@ -55,26 +60,7 @@ public class AutoRunService implements ApplicationRunner {
                 nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
             } catch (Exception e) {
                 log.warn(e.getMessage());
-                List<String> ipList = Ipv4Util.list(NetUtil.getLocalhostStr() + "/24", false);
-                CopyOnWriteArrayList<String> onlineList = new CopyOnWriteArrayList<>();
-                CountDownLatch countDownLatch = new CountDownLatch(ipList.size());
-                ipList.forEach(ip -> threadPool.execute(() -> {
-                    try {
-                        HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(100).execute();
-                        CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
-                        CustomConfig data = result.getData();
-                        if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(ip, NetUtil.getLocalhostStr())) {
-                            customConfig.setServerHost(ip);
-                            customConfig.setServerPort(data.getNettyPort());
-                            onlineList.add(ip);
-                        }
-                    } catch (Exception ignore) {
-                    } finally {
-                        countDownLatch.countDown();
-                    }
-                }));
-                countDownLatch.await();
-                log.info(onlineList.toString());
+                probe();
             }
         }
         log.info(String.valueOf(customConfig));
@@ -84,5 +70,53 @@ public class AutoRunService implements ApplicationRunner {
             nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
         }
         taskService.initMonitorTask();
+    }
+
+    @SneakyThrows
+    private void probe() {
+        List<String> onlineList = listOnlineIp();
+        CopyOnWriteArrayList<String> usableList = new CopyOnWriteArrayList<>();
+        CountDownLatch countDownLatch = new CountDownLatch(onlineList.size());
+        onlineList.forEach(ip -> threadPool.execute(() -> {
+            try {
+                HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(100).execute();
+                CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
+                CustomConfig data = result.getData();
+                if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(data.getLocalhost(), NetUtil.getLocalhostStr())) {
+                    customConfig.setServerHost(ip);
+                    customConfig.setServerPort(data.getNettyPort());
+                    usableList.add(ip);
+                }
+            } catch (Exception ignore) {
+            } finally {
+                countDownLatch.countDown();
+            }
+        }));
+        countDownLatch.await();
+        log.info(usableList.toString());
+    }
+
+    private List<String> listOnlineIp() {
+        List<String> ipList = new ArrayList<>();
+        if (SystemUtil.getOsInfo().isWindows()) {
+            try {
+                Runtime runtime = Runtime.getRuntime();
+                Process process = runtime.exec("cmd.exe /c arp -a");
+                // 输出结果，必须写在 waitFor 之前
+                InputStream inputStream = process.getInputStream();
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, CharsetUtil.GBK));
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+                    if (StrUtil.contains(line, "动态")) {
+                        ipList.add(StrUtil.subBefore(StrUtil.trimStart(line), " ", false));
+                    }
+                }
+                // 退出值 0 为正常，其他为异常
+                process.waitFor();
+                process.destroy();
+            } catch (Exception ignore) {
+            }
+        }
+        return ipList;
     }
 }
