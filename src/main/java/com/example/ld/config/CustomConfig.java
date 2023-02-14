@@ -22,5 +22,6 @@ public class CustomConfig {
     private int nettyPort;
     private int monitorStartDay;
     private long monitorInterval;
+    private boolean probe;
     private List<String> monitorPath = new ArrayList<>();
 }
