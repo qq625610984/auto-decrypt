@@ -24,5 +24,6 @@ public class CustomConfig {
     private long monitorInterval;
     private boolean probe;
     private List<String> monitorPath = new ArrayList<>();
+    private int timeout = 100;
     private String localhost;
 }

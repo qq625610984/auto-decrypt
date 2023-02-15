@@ -79,7 +79,7 @@ public class AutoRunService implements ApplicationRunner {
         CountDownLatch countDownLatch = new CountDownLatch(onlineList.size());
         onlineList.forEach(ip -> threadPool.execute(() -> {
             try {
-                HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(100).execute();
+                HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(customConfig.getTimeout()).execute();
                 CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
                 CustomConfig data = result.getData();
                 if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(data.getLocalhost(), NetUtil.getLocalhostStr())) {
