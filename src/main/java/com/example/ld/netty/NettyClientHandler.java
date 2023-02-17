@@ -66,6 +66,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
             taskInfo.updateSendBackLength(bytes.length);
             if (randomAccessFile.length() == taskInfo.getTotalBackLength()) {
                 randomAccessFile.close();
+                FileUtil.del(file);
                 FileUtil.rename(tempFile, file.getName(), true);
                 ctx.channel().close();
                 return;

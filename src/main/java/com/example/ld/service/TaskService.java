@@ -55,6 +55,7 @@ public class TaskService {
                         // 本地解密
                         File tempFile = fileService.getTempFile(file);
                         FileUtil.copy(file, tempFile, true);
+                        FileUtil.del(file);
                         FileUtil.rename(tempFile, file.getName(), true);
                     } else {
                         // 远程解密
