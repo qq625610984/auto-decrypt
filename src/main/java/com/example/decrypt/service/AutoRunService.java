@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -53,9 +54,11 @@ public class AutoRunService implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        List<File> files = FileUtil.loopFiles(new File("C:\\Users"), 1, file -> !file.isHidden() && !file.isFile() && !StrUtil.containsAny(file.getName(), "All", "Default", "Public"));
+        String userHome = files.get(0).getAbsolutePath();
         customConfig.setLocalhost(NetUtil.getLocalhostStr());
         List<String> monitorPath = customConfig.getMonitorPath();
-        monitorPath.replaceAll(path -> fileService.formatDirPath(path));
+        monitorPath.replaceAll(path -> fileService.formatDirPath(StrUtil.replace(path, "~", userHome)));
         if (customConfig.isProbe()) {
             try {
                 nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
@@ -66,7 +69,7 @@ public class AutoRunService implements ApplicationRunner {
         }
         log.info(String.valueOf(customConfig));
         // 清空远程解密产生的临时文件
-        FileUtil.del(fileService.splicePath("~", CommonConstant.SERVER_DIR));
+        FileUtil.del(fileService.splicePath(SystemUtil.get(SystemUtil.USER_DIR), CommonConstant.SERVER_DIR));
         if (!StrUtil.isEmpty(customConfig.getServerHost())) {
             log.info("解密服务器：{}:{}", customConfig.getServerHost(), customConfig.getServerPort());
             nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
