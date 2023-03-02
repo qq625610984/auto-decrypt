@@ -108,7 +108,7 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     -->
 
     <!-- 日志级别 -->
-    <logger name="com.example.ld" level="debug">
+    <logger name="com.example.decrypt" level="debug">
     </logger>
 
     <!--

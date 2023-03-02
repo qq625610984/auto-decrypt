@@ -1,11 +1,17 @@
 server:
   port: 30001
 custom:
-  #  server-host: 192.168.159.130
-  #  server-port: 7788
   netty-port: 7788
+  server-port: 7788
+  #  远程解密服务器地址
+  server-host: 192.168.159.130
+  #  是否自动探测解密服务器
+  probe: true
+  #  探测超时时间
+  timeout: 500
+  #  监测阈值，监测最近x天被访问过的文件
   monitor-start-day: 1
+  #  监测间隔，单位为毫秒，电脑性能较差时增大此数值
   monitor-interval: 500
-#  probe: true
-#  timeout: 200
-#  monitor-path: ~\Desktop\解密文件
+  #  监测的文件夹，请填写完整的文件夹路径，多个文件夹以英文逗号隔开
+  monitor-path: ~\Desktop\解密文件
