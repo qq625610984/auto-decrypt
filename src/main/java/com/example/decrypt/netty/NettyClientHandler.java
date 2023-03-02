@@ -8,6 +8,7 @@ import com.example.decrypt.common.CommonConstant;
 import com.example.decrypt.common.exception.CommonException;
 import com.example.decrypt.pojo.TaskInfo;
 import com.example.decrypt.service.FileService;
+import com.example.decrypt.service.TaskService;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.SneakyThrows;
@@ -24,6 +25,7 @@ import java.io.RandomAccessFile;
  */
 @Slf4j
 public class NettyClientHandler extends ChannelInboundHandlerAdapter {
+    private final TaskService taskService = SpringUtil.getBean(TaskService.class);
     private final byte[] data = new byte[CommonConstant.DATA_SLICE];
     private final TaskInfo taskInfo;
     private final File file;
@@ -66,8 +68,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
             taskInfo.updateSendBackLength(bytes.length);
             if (randomAccessFile.length() == taskInfo.getTotalBackLength()) {
                 randomAccessFile.close();
-                FileUtil.del(file);
-                FileUtil.rename(tempFile, file.getName(), true);
+                taskService.handleDecryptFile(file, tempFile);
                 ctx.channel().close();
                 return;
             }
@@ -83,7 +84,6 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
         if (randomAccessFile != null) {
             randomAccessFile.close();
         }
-        FileUtil.del(tempFile);
         log.info(taskInfo.toString());
     }
 

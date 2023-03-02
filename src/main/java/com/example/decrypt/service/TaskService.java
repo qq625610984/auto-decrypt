@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.example.decrypt.common.CommonConstant;
 import com.example.decrypt.config.CustomConfig;
@@ -55,8 +56,7 @@ public class TaskService {
                         // 本地解密
                         File tempFile = fileService.getTempFile(file);
                         FileUtil.copy(file, tempFile, true);
-                        FileUtil.del(file);
-                        FileUtil.rename(tempFile, file.getName(), true);
+                        handleDecryptFile(file, tempFile);
                     } else {
                         // 远程解密
                         TaskInfo taskInfo = new TaskInfo();
@@ -76,6 +76,19 @@ public class TaskService {
         }
     }
 
+    public void handleDecryptFile(File file, File tempFile) {
+        try {
+            FileUtil.del(file);
+            FileUtil.rename(tempFile, file.getName(), true);
+        } catch (Exception ignore) {
+            String path = StrUtil.removeSuffix(FileUtil.getAbsolutePath(file), file.getName());
+            String dir = path + CommonConstant.DES_DIR + DateUtil.format(new Date(), "MMdd-HHmm") + "\\";
+            FileUtil.move(tempFile, FileUtil.mkdir(dir), true);
+            tempFile = new File(StrUtil.replace(tempFile.getAbsolutePath(), path, dir));
+            FileUtil.rename(tempFile, file.getName(), true);
+        }
+    }
+
     public void addMonitorTask(MonitorTask monitorTask) {
         monitorTask.setMonitorPath(fileService.formatDirPath(monitorTask.getMonitorPath()));
         if (monitorTask.getTriggerTime() == 0) {
@@ -84,6 +97,13 @@ public class TaskService {
         File file = new File(monitorTask.getMonitorPath());
         if (!fileObserverMap.containsKey(file.getAbsolutePath())) {
             log.info("监控文件夹：{}", FileUtil.mkdir(file).getAbsolutePath());
+            // 清理临时存放文件夹
+            List<File> files = fileService.loopFiles(file, File::isDirectory);
+            for (File each : files) {
+                if (ReUtil.isMatch(CommonConstant.DES_DIR + "\\d{4}-\\d{4}", each.getName())) {
+                    FileUtil.del(each);
+                }
+            }
             // 清理临时文件
             FileUtil.loopFiles(file.getAbsolutePath(), each -> StrUtil.endWith(each.getName(), CommonConstant.TEMP_SUFFIX)).forEach(FileUtil::del);
             FileAlterationObserver fileObserver = new FileAlterationObserver(file);

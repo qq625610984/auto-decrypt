@@ -1,5 +1,6 @@
 package com.example.decrypt.service;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -61,7 +62,11 @@ public class FileListener implements FileAlterationListener {
 
     @SneakyThrows
     private void decryptFile(File file) {
-        if (!file.isHidden() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX)) {
+        if (!file.isHidden()) {
+            String suffix = FileUtil.getSuffix(file);
+            if (StrUtil.isEmpty(suffix) || StrUtil.equals(suffix, CommonConstant.TEMP_SUFFIX)) {
+                return;
+            }
             BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
             FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
             if (lastAccessTime.toMillis() > monitorTask.getTriggerTime()) {
