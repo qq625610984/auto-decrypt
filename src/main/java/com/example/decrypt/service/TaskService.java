@@ -3,6 +3,7 @@ package com.example.decrypt.service;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author HeYiyu
@@ -38,8 +38,6 @@ public class TaskService {
     @Resource
     private FileService fileService;
     @Resource
-    private ExecutorService threadPool;
-    @Resource
     private FileAlterationMonitor fileAlterationMonitor;
     @Resource
     private NettyClient nettyClient;
@@ -49,7 +47,7 @@ public class TaskService {
     public void addDecryptTask(DecryptTask decryptTask) {
         List<File> fileList = FileUtil.loopFiles(decryptTask.getFromPath(), file -> !file.isHidden() && !StrUtil.endWith(file.getName(), CommonConstant.TEMP_SUFFIX));
         for (File file : fileList) {
-            threadPool.execute(() -> {
+            ThreadUtil.execute(() -> {
                 try {
                     log.debug("开始解密-{}", file.getAbsolutePath());
                     if (StrUtil.isEmpty(decryptTask.getServerHost())) {

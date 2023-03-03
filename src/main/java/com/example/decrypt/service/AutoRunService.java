@@ -2,6 +2,7 @@ package com.example.decrypt.service;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author HeYiyu
@@ -47,8 +47,6 @@ public class AutoRunService implements ApplicationRunner {
     private FileService fileService;
     @Resource
     private NettyClient nettyClient;
-    @Resource
-    private ExecutorService threadPool;
     @Value("${server.port}")
     private int port;
 
@@ -85,7 +83,7 @@ public class AutoRunService implements ApplicationRunner {
         List<String> onlineList = listOnlineIp();
         CopyOnWriteArrayList<String> usableList = new CopyOnWriteArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(onlineList.size());
-        onlineList.forEach(ip -> threadPool.execute(() -> {
+        onlineList.forEach(ip -> ThreadUtil.execute(() -> {
             try {
                 HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(customConfig.getTimeout()).execute();
                 CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
