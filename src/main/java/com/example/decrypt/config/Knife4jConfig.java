@@ -29,7 +29,7 @@ public class Knife4jConfig {
         docket.groupName("all")
                 .select()
                 // 这里指定Controller扫描包路径
-                .apis(RequestHandlerSelectors.basePackage("com.example.ld.controller"))
+                .apis(RequestHandlerSelectors.basePackage("com.example.decrypt.controller"))
                 .paths(PathSelectors.any())
                 .build();
         return docket;

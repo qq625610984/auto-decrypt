@@ -21,7 +21,9 @@ public class CustomConfig {
     private int serverPort;
     private String serverHost;
     private boolean probe;
-    private int timeout = 300;
+    private int timeout = 500;
+    private String refreshFlag = "aaa";
+    private long cacheTime = 2;
     private int monitorStartDay;
     private long monitorInterval;
     private List<String> monitorPath = new ArrayList<>();

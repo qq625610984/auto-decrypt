@@ -107,7 +107,7 @@ public class TaskService {
             // 清理临时文件
             FileUtil.loopFiles(file.getAbsolutePath(), each -> StrUtil.endWith(each.getName(), CommonConstant.TEMP_SUFFIX)).forEach(FileUtil::del);
             FileAlterationObserver fileObserver = new FileAlterationObserver(file);
-            fileObserver.addListener(new FileListener(monitorTask));
+            fileObserver.addListener(new FileListener(monitorTask, customConfig, this));
             fileObserverMap.put(file.getAbsolutePath(), fileObserver);
             fileAlterationMonitor.addObserver(fileObserver);
         }

@@ -57,6 +57,7 @@ public class AutoRunService implements ApplicationRunner {
         List<File> files = FileUtil.loopFiles(new File("C:\\Users"), 1, file -> !file.isHidden() && !file.isFile() && !StrUtil.containsAny(file.getName(), "All", "Default", "Public"));
         String userHome = files.get(0).getAbsolutePath();
         customConfig.setLocalhost(NetUtil.getLocalhostStr());
+        customConfig.setCacheTime(customConfig.getCacheTime() * 1000);
         List<String> monitorPath = customConfig.getMonitorPath();
         monitorPath.replaceAll(path -> fileService.formatDirPath(StrUtil.replace(path, "~", userHome)));
         if (customConfig.isProbe()) {
