@@ -15,7 +15,7 @@ public class CommonConstant {
     // 临时文件后缀名
     public static final String TEMP_SUFFIX = ".tmp2";
     // 远程解密文件的临时保存位置
-    public static final String SERVER_DIR = "Encrypt";
+    public static final String SERVER_DIR = "remote";
     // Netty传输确认信号
     public static final String ACK = "ack";
     // 重命名失败的临时保存位置
