@@ -2,6 +2,7 @@ package com.example.decrypt.service;
 
 import cn.hutool.cache.CacheUtil;
 import cn.hutool.cache.impl.TimedCache;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,7 +10,6 @@ import com.example.decrypt.common.CommonConstant;
 import com.example.decrypt.config.CustomConfig;
 import com.example.decrypt.pojo.DecryptTask;
 import com.example.decrypt.pojo.MonitorTask;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationObserver;
@@ -69,7 +69,6 @@ public class FileListener implements FileAlterationListener {
     @Override
     public void onStop(FileAlterationObserver observer) {}
 
-    @SneakyThrows
     private void decryptFile(File file) {
         if (file.isHidden() || timedCache.containsKey(file.getAbsolutePath())) {
             return;
@@ -78,16 +77,20 @@ public class FileListener implements FileAlterationListener {
         if (StrUtil.isEmpty(suffix) || StrUtil.equals(suffix, CommonConstant.TEMP_SUFFIX)) {
             return;
         }
-        BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
-        if (lastAccessTime.toMillis() > monitorTask.getTriggerTime()) {
-            DecryptTask decryptTask = new DecryptTask();
-            decryptTask.setServerHost(customConfig.getServerHost());
-            decryptTask.setServerPort(customConfig.getServerPort());
-            decryptTask.setFromPath(file.getAbsolutePath());
-            decryptTask.setToPath(toPath);
-            timedCache.put(file.getAbsolutePath(), null);
-            taskService.addDecryptTask(decryptTask);
+        try {
+            BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            FileTime lastAccessTime = basicFileAttributes.lastAccessTime();
+            if (lastAccessTime.toMillis() > monitorTask.getTriggerTime()) {
+                DecryptTask decryptTask = new DecryptTask();
+                decryptTask.setServerHost(customConfig.getServerHost());
+                decryptTask.setServerPort(customConfig.getServerPort());
+                decryptTask.setFromPath(file.getAbsolutePath());
+                decryptTask.setToPath(toPath);
+                timedCache.put(file.getAbsolutePath(), null);
+                taskService.addDecryptTask(decryptTask);
+            }
+        } catch (Exception e) {
+            log.error(ExceptionUtil.stacktraceToString(e));
         }
     }
 
