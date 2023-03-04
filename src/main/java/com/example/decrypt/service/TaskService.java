@@ -80,7 +80,7 @@ public class TaskService {
             FileUtil.rename(tempFile, file.getName(), true);
         } catch (Exception ignore) {
             String path = StrUtil.removeSuffix(FileUtil.getAbsolutePath(file), file.getName());
-            String dir = path + CommonConstant.DES_DIR + DateUtil.format(new Date(), "MMdd-HHmm") + "\\";
+            String dir = path + CommonConstant.DECRYPT_DIR + DateUtil.format(new Date(), "MMdd-HHmm") + "\\";
             FileUtil.move(tempFile, FileUtil.mkdir(dir), true);
             tempFile = new File(StrUtil.replace(tempFile.getAbsolutePath(), path, dir));
             FileUtil.rename(tempFile, file.getName(), true);
@@ -98,7 +98,7 @@ public class TaskService {
             // 清理临时存放文件夹
             List<File> files = fileService.loopFiles(file, File::isDirectory);
             for (File each : files) {
-                if (ReUtil.isMatch(CommonConstant.DES_DIR + "\\d{4}-\\d{4}", each.getName())) {
+                if (ReUtil.isMatch(CommonConstant.DECRYPT_DIR + "\\d{4}-\\d{4}", each.getName())) {
                     FileUtil.del(each);
                 }
             }

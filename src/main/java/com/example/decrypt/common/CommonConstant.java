@@ -19,5 +19,5 @@ public class CommonConstant {
     // Netty传输确认信号
     public static final String ACK = "ack";
     // 重命名失败的临时保存位置
-    public static final String DES_DIR = "Des-";
+    public static final String DECRYPT_DIR = "decrypt-";
 }
