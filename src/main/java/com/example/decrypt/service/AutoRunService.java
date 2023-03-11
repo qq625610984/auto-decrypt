@@ -3,7 +3,6 @@ package com.example.decrypt.service;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -23,12 +22,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
@@ -80,7 +77,7 @@ public class AutoRunService implements ApplicationRunner {
 
     @SneakyThrows
     private void probe() {
-        List<String> onlineList = listOnlineIp();
+        Set<String> onlineList = listOnlineIp();
         CopyOnWriteArrayList<String> usableList = new CopyOnWriteArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(onlineList.size());
         onlineList.forEach(ip -> ThreadUtil.execute(() -> {
@@ -102,27 +99,19 @@ public class AutoRunService implements ApplicationRunner {
         log.info("可用服务器地址：{}", usableList);
     }
 
-    private List<String> listOnlineIp() {
-        List<String> ipList = new ArrayList<>();
-        if (SystemUtil.getOsInfo().isWindows()) {
-            try {
-                Runtime runtime = Runtime.getRuntime();
-                Process process = runtime.exec("cmd.exe /c arp -a");
-                // 输出结果，必须写在 waitFor 之前
-                InputStream inputStream = process.getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, CharsetUtil.GBK));
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    if (StrUtil.contains(line, "动态")) {
-                        ipList.add(StrUtil.subBefore(StrUtil.trimStart(line), " ", false));
-                    }
-                }
-                // 退出值 0 为正常，其他为异常
-                process.waitFor();
-                process.destroy();
-            } catch (Exception ignore) {
+    private Set<String> listOnlineIp() {
+        Set<String> ipSet = new LinkedHashSet<>();
+        LinkedHashSet<String> ipv4s = NetUtil.localIpv4s();
+        ipv4s.remove("127.0.0.1");
+        for (String ipv4 : ipv4s) {
+            List<String> split = StrUtil.split(ipv4, '.');
+            split.remove(3);
+            String prefix = StrUtil.join(".", split);
+            for (int i = 1; i <= 255; i++) {
+                ipSet.add(prefix + "." + i);
             }
+            ipSet.remove(ipv4);
         }
-        return ipList;
+        return ipSet;
     }
 }
