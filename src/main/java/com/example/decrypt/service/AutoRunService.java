@@ -57,9 +57,12 @@ public class AutoRunService implements ApplicationRunner {
         monitorPath.replaceAll(path -> fileService.formatDirPath(StrUtil.replace(path, "~", userHome)));
         if (customConfig.isProbe()) {
             try {
-                nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
+                if (!StrUtil.isEmpty(customConfig.getServerHost())) {
+                    nettyClient.connect(customConfig.getServerHost(), customConfig.getServerPort());
+                }
             } catch (Exception e) {
                 log.warn(e.getMessage());
+            } finally {
                 probe();
             }
         }
