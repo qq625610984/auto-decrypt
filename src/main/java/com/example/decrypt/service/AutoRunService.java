@@ -1,5 +1,6 @@
 package com.example.decrypt.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.thread.ThreadUtil;
@@ -86,8 +87,8 @@ public class AutoRunService implements ApplicationRunner {
         onlineList.forEach(ip -> ThreadUtil.execute(() -> {
             try {
                 HttpResponse httpResponse = HttpRequest.get(ip + ":" + port + "/config").timeout(customConfig.getTimeout()).execute();
-                CommonResult<CustomConfig> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<CustomConfig>>() {});
-                CustomConfig data = result.getData();
+                CommonResult<Object> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<Object>>() {});
+                CustomConfig data = BeanUtil.toBean(result.getData(), CustomConfig.class);
                 if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(data.getLocalhost(), NetUtil.getLocalhostStr())) {
                     customConfig.setServerHost(ip);
                     customConfig.setServerPort(data.getNettyPort());

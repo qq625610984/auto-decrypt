@@ -90,7 +90,7 @@ public class TaskService {
     public void addMonitorTask(MonitorTask monitorTask) {
         monitorTask.setMonitorPath(fileService.formatDirPath(monitorTask.getMonitorPath()));
         if (monitorTask.getTriggerTime() == 0) {
-            monitorTask.setTriggerTime(DateUtil.offsetDay(new Date(), customConfig.getMonitorStartDay() * -1).getTime());
+            monitorTask.setTriggerTime(DateUtil.offsetHour(new Date(), customConfig.getMonitorStartDay() * -1).getTime());
         }
         File file = new File(monitorTask.getMonitorPath());
         if (!fileObserverMap.containsKey(file.getAbsolutePath())) {

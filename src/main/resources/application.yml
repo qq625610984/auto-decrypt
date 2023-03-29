@@ -8,12 +8,12 @@ custom:
   #  是否自动探测解密服务器
   #  probe: true
   #  探测超时时间
-  timeout: 500
+  timeout: 1000
   #  手动刷新标识（文件夹）
   refresh-flag: aaa
   #  缓存时长，不会对x秒内解密过的文件进行重复解密
   cache-time: 5
-  #  监测阈值，监测最近x天被访问过的文件
+  #  监测阈值，监测最近x小时被访问过的文件
   monitor-start-day: 1
   #  监测间隔，单位为毫秒，电脑性能较差时增大此数值
   monitor-interval: 1000
