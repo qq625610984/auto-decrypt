@@ -2,6 +2,7 @@ package com.example.decrypt.netty;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.example.decrypt.common.CommonConstant;
@@ -49,6 +50,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
             // 读取数据发送
             if (StrUtil.equals((String) msg, CommonConstant.ACK)) {
                 sendData(ctx);
+                log.info("{} 发送进度：{}", taskInfo.getFromPath(), NumberUtil.decimalFormat("#.#%", (double) taskInfo.getSendLength() / taskInfo.getTotalLength()));
             } else {
                 taskInfo.setErrorMessage(StrUtil.format("服务端错误：{}", msg));
                 ctx.channel().close();
@@ -69,11 +71,13 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
             if (randomAccessFile.length() == taskInfo.getTotalBackLength()) {
                 randomAccessFile.close();
                 taskService.handleDecryptFile(file, tempFile);
+                log.info("{} 接收进度：100%", taskInfo.getFromPath());
                 ctx.channel().close();
                 return;
             }
             if (++times % CommonConstant.TRANSMIT_TIMES == 0) {
                 ctx.channel().writeAndFlush(CommonConstant.ACK);
+                log.info("{} 接收进度：{}", taskInfo.getFromPath(), NumberUtil.decimalFormat("#.#%", (double) taskInfo.getSendBackLength() / taskInfo.getTotalBackLength()));
             }
         }
     }
