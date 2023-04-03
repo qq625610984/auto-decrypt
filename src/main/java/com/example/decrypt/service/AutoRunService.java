@@ -63,6 +63,7 @@ public class AutoRunService implements ApplicationRunner {
                 }
             } catch (Exception e) {
                 log.warn(e.getMessage());
+                customConfig.setServerHost(null);
             } finally {
                 probe();
             }
@@ -90,8 +91,10 @@ public class AutoRunService implements ApplicationRunner {
                 CommonResult<Object> result = JacksonUtil.toObject(httpResponse.bodyBytes(), new TypeReference<CommonResult<Object>>() {});
                 CustomConfig data = BeanUtil.toBean(result.getData(), CustomConfig.class);
                 if (StrUtil.isEmpty(data.getServerHost()) && !StrUtil.equals(data.getLocalhost(), NetUtil.getLocalhostStr())) {
-                    customConfig.setServerHost(ip);
-                    customConfig.setServerPort(data.getNettyPort());
+                    if (StrUtil.isEmpty(customConfig.getServerHost())) {
+                        customConfig.setServerHost(ip);
+                        customConfig.setServerPort(data.getNettyPort());
+                    }
                     usableList.add(ip);
                 }
             } catch (Exception ignore) {
